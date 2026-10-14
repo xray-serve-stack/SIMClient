@@ -13,7 +13,7 @@ const DB_NAME = "simclient";
  * a full-DB rebuild, which `openChatDbOnce` performs when the version
  * differs.
  */
-export const EXPECTED_DB_VERSION = 1;
+export const EXPECTED_DB_VERSION = 14;
 
 export const STORE_SIMS = "sims";
 export const STORE_CONVERSATIONS = "conversations";
