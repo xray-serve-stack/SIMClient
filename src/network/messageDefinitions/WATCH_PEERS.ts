@@ -14,9 +14,12 @@ const PUBLIC_KEY_SIZE = 32;
 
 export class WatchPeersPayloadCodec implements PayloadCodec<Uint8Array[]> {
   parse(_peerRole: PeerRole, payload: Uint8Array): Uint8Array[] {
-    if (payload.length === 0 || payload.length % PUBLIC_KEY_SIZE !== 0) {
+    // A zero-length payload is the valid encoding of "no peers are
+    // online": an empty set of 32-byte keys. It is a multiple of 32.
+    // Any other non-multiple-of-32 length is rejected.
+    if (payload.length % PUBLIC_KEY_SIZE !== 0) {
       throw new InvalidPayload(
-        "WATCH_PEERS payload must contain 32-byte public keys",
+        "WATCH_PEERS payload length must be a multiple of 32",
       );
     }
     const out: Uint8Array[] = [];
@@ -27,6 +30,13 @@ export class WatchPeersPayloadCodec implements PayloadCodec<Uint8Array[]> {
   }
 
   serialize(_peerRole: PeerRole, payload: Uint8Array[]): Uint8Array {
+    // The request must carry at least one key. A client with no Serves
+    // to watch has nothing to ask and must not send the message.
+    if (payload.length === 0) {
+      throw new InvalidPayload(
+        "WATCH_PEERS request must contain at least one public key",
+      );
+    }
     for (const key of payload) {
       if (key.length !== PUBLIC_KEY_SIZE) {
         throw new InvalidPayload(
